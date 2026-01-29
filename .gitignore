@@ -1,0 +1,15 @@
+# Deno
+.deno_cache/
+cov_profile/
+lcov.info
+
+# IDE
+.vscode/
+.idea/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Legacy
+legacy/

@@ -1,0 +1,57 @@
+---
+description: Standards for git commits, pushing, and release tagging
+globs: 
+---
+# Git Standards & Workflow
+
+When the user asks you to push code, commit changes, or prepare a release, you MUST follow these rules.
+
+## 1. Conventional Commits
+
+Always compose commit messages following the [Conventional Commits](https://www.conventionalcommits.org/) standard.
+
+**Format:**
+```text
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+**Types:**
+- `feat`: A new feature
+- `fix`: A bug fix
+- `docs`: Documentation only changes
+- `style`: Changes that do not affect the meaning of the code (white-space, formatting, etc)
+- `refactor`: A code change that neither fixes a bug nor adds a feature
+- `perf`: A code change that improves performance
+- `test`: Adding missing tests or correcting existing tests
+- `chore`: Changes to the build process or auxiliary tools and libraries (e.g., ci, deno.json)
+
+**Examples:**
+- `feat(logger): add async context support`
+- `fix(utils): resolve null pointer exception`
+- `chore(ci): update github actions configuration`
+
+## 2. Release Tagging Strategy
+
+This monorepo uses **independent versioning** for each package. When creating tags for releases, you MUST use the scoped tagging convention:
+
+```text
+<package-name>/v<version>
+```
+
+**Examples:**
+- `logger/v1.0.0`
+- `utils/v2.1.0`
+
+**NEVER** use a bare version tag (like `v1.0.0`) as it is ambiguous in a monorepo.
+
+## 3. Pushing Code
+
+When asked to push:
+1.  Verify linting and tests pass (`deno task test`).
+2.  Stage relevant files.
+3.  Generate a Conventional Commit message.
+4.  If it is a release, remind the user about the tagging convention or generate the tag command if requested.
