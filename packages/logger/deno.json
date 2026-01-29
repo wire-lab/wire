@@ -1,6 +1,7 @@
 {
   "name": "@wire/logger",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "description": "A blazing fast, strongly-typed logger with async context propagation for Deno, Node.js, and Bun.",
   "exports": "./mod.ts",
   "license": "MIT"
 }
