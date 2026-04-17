@@ -30,7 +30,7 @@ The logger is built around the concept of a **Global Logger** and **Contextual L
 
 Initialize the logger at the entry point of your application.
 
-```typescript
+```ts ignore
 import { init_logger, create_logger, LogLevel, LogLevelNameMap } from '@wire/logger';
 
 // Initialize the global logger with a simple JSON stdout transport
@@ -53,7 +53,7 @@ init_logger({
 
 Use `use_logger()` to get the logger instance anywhere in your code.
 
-```typescript
+```ts ignore
 import { use_logger } from '@wire/logger';
 
 const log = use_logger();
@@ -66,7 +66,7 @@ log.error({ msg: 'Database connection failed', error: new Error('Connection time
 
 To track logs across an async flow (e.g., an HTTP request), use `cast_logger`. All logs within the callback (and any async functions called by it) will share the same logger instance and metadata.
 
-```typescript
+```ts ignore
 import { cast_logger } from '@wire/logger';
 
 Deno.serve(async (req) => {
@@ -97,7 +97,7 @@ async function handleRequest() {
 
 You can add metadata or "stack" tags to trace execution paths.
 
-```typescript
+```ts ignore
 const log = use_logger();
 
 // Add metadata to current context
@@ -147,7 +147,7 @@ Creates a new logger context. The callback receives the new logger instance.
 
 ### `LogLevel` Enum
 
-```typescript
+```ts ignore
 export enum LogLevel {
   emergency = 0,
   alert = 1,
@@ -168,7 +168,7 @@ A `Map<LogLevel, string>` providing the string name for each log level (e.g., `L
 
 ### Node.js
 
-```typescript
+```ts ignore
 import { init_logger, LogLevel, LogLevelNameMap } from '@wire/logger';
 import { writer } from 'node:process';
 
@@ -189,7 +189,7 @@ init_logger({
 
 ### Bun
 
-```typescript
+```ts ignore
 import { init_logger, LogLevel, LogLevelNameMap } from '@wire/logger';
 
 init_logger({

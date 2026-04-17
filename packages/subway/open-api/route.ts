@@ -1,0 +1,67 @@
+import type { SubwayRoute } from '../subway.ts';
+import { pipe } from '../support/pipe.ts';
+
+type SimpleMiddleware<I, O> = (input: I, next: (input: I) => O) => O;
+
+export type HttpMethod =
+  | 'get'
+  | 'post'
+  | 'put'
+  | 'delete'
+  | 'patch'
+  | 'options'
+  | 'head'
+  | 'trace';
+
+export type OpenApiRouteMeta = {
+  method?: HttpMethod;
+  path?: string;
+  summary?: string;
+  description?: string;
+  tags?: string[];
+  operationId?: string;
+  parameters?: unknown[];
+  requestBody?: unknown;
+  responses?: Record<string, unknown>;
+  deprecated?: boolean;
+  security?: unknown[];
+  callbacks?: Record<string, unknown>;
+  externalDocs?: unknown;
+};
+
+export class OpenApiRoute<I, O> implements SubwayRoute<I, O> {
+  private middlewares: SimpleMiddleware<I, O>[] = [];
+  private openapi?: OpenApiRouteMeta;
+  constructor(private handler?: (sig: I) => O) {}
+
+  get execute(): (input: I) => O {
+    let handler = this.handler;
+
+    if (this.middlewares.length !== 0) {
+      // @ts-ignore: TS2345
+      handler = pipe([...this.middlewares.reverse(), handler]);
+    }
+
+    if (handler === undefined) throw new Error('Route handler is not set');
+
+    Reflect.defineProperty(this, 'execute', { value: handler });
+
+    return handler;
+  }
+
+  set_handler(handler: (sig: I) => O): void {
+    this.handler = handler;
+  }
+
+  use(middleware: SimpleMiddleware<I, O>): void {
+    this.middlewares.push(middleware);
+  }
+
+  set_openapi(meta: OpenApiRouteMeta): void {
+    this.openapi = { ...(this.openapi ?? {}), ...meta };
+  }
+
+  get_openapi(): OpenApiRouteMeta | undefined {
+    return this.openapi;
+  }
+}

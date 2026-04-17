@@ -1,0 +1,15 @@
+{
+  "name": "@wire/subway",
+  "version": "1.0.0",
+  "license": "MIT",
+  "exports": {
+    ".": "./mod.ts",
+    "./routes/simple.ts": "./routes/simple.ts",
+    "./support/pipe.ts": "./support/pipe.ts"
+  },
+  "lint": {
+    "rules": {
+      "exclude": ["no-explicit-any"]
+    }
+  }
+}

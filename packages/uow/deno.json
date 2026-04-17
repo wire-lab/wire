@@ -1,0 +1,7 @@
+{
+  "name": "@wire/uow",
+  "version": "1.0.0",
+  "description": "Unit of Work with async context propagation for coordinating multiple transactional resources.",
+  "exports": "./mod.ts",
+  "license": "MIT"
+}
