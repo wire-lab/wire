@@ -19,7 +19,7 @@ export class SpawnableConnector<Session> {
    * Returns current session if the connector was already selected in this scope.
    */
   find(): Session | undefined {
-    return this.scope.get().find<Session>(this)?.session;
+    return this.scope.get()?.find<Session>(this)?.session;
   }
 
   /**
