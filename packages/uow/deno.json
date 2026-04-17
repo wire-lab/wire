@@ -1,6 +1,6 @@
 {
   "name": "@wire/uow",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Unit of Work with async context propagation for coordinating multiple transactional resources.",
   "exports": {
     ".": "./mod.ts",

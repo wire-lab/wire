@@ -7,16 +7,36 @@ import {
 import { SpawnableConnector } from '../connectors/spawnable.ts';
 import { UnitOfWorkNotFoundError, UnitOfWorkScope } from '../mod.ts';
 
-Deno.test('SpawnableConnector throws outside active scope', async () => {
+Deno.test('SpawnableConnector outside active scope: find is undefined, get/select throw', async () => {
   const connector = new SpawnableConnector(new UnitOfWorkScope(), () =>
     Promise.resolve({
       session: { id: 'pg-1' },
       cycle: { commit: async () => {}, rollback: async () => {} },
     }));
 
-  assertThrows(() => connector.find(), UnitOfWorkNotFoundError);
-  assertThrows(() => connector.get(), UnitOfWorkNotFoundError);
+  assertStrictEquals(connector.find(), undefined);
+  assertThrows(
+    () => connector.get(),
+    Error,
+    'SpawnableConnector session not found. Call select() first.',
+  );
   await assertRejects(() => connector.select(), UnitOfWorkNotFoundError);
+});
+
+Deno.test('SpawnableConnector find returns undefined after cast ends', async () => {
+  const scope = new UnitOfWorkScope();
+  const connector = new SpawnableConnector(scope, () =>
+    Promise.resolve({
+      session: { id: 'pg-1' },
+      cycle: { commit: async () => {}, rollback: async () => {} },
+    }));
+
+  await scope.cast(async () => {
+    await connector.select();
+    assertEquals(connector.find()?.id, 'pg-1');
+  });
+
+  assertStrictEquals(connector.find(), undefined);
 });
 
 Deno.test('SpawnableConnector select spawns only once in same cast', async () => {
