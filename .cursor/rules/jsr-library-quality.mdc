@@ -1,0 +1,32 @@
+---
+description: Quality bar for published JSR packages (score, tests, docs, types)
+alwaysApply: true
+---
+
+# JSR library quality targets
+
+This repository publishes TypeScript libraries to [JSR](https://jsr.io). Agents should treat every change under `packages/**` as moving toward **production-quality releases**, not prototypes.
+
+## Score and publishing
+
+- **Aim for a 100% JSR package score** on each package before treating work as release-ready. Use JSR’s scoring feedback after publishing or `deno publish --dry-run` checks (slow types, docs).
+- **Slow types**: All symbols in the **public API** must use **explicit types** where JSR requires them so consumers get fast checking and good generated docs. See [About slow types](https://jsr.io/docs/about-slow-types).
+- **Symbol documentation**: Follow [JSR writing docs](https://jsr.io/docs/writing-docs#symbol-documentation)—at least **80% of exported symbols** documented; **prefer 100%**. Use JSDoc on exports; document parameters and non-obvious behavior. Add **module** docs (`@module`) when a file exports many related symbols.
+- **`deno.json`**: Each publishable package needs valid `name`, `version`, `exports`, `license`, and a clear **`description`**. Keep versions semver-bumped per package.
+
+## Tests and checks
+
+- **Tests**: New or changed behavior should have **tests** (`deno task test` or package-scoped tests). Prefer meaningful coverage of public behavior, edge cases, and regressions—not only happy paths.
+- **Before pushing or suggesting a merge**: Run **`deno fmt`**, **`deno lint`**, and **`deno task test`** (or the project’s documented test task) for the affected workspace. Fix failures before recommending the change as complete.
+- **Docs lint**: When touching public exports, run **`deno doc --lint`** on the package entry (e.g. `packages/<name>/mod.ts`) and fix documentation issues (including `private-type-ref` for types used in public signatures).
+
+## Scope and dependencies
+
+- **Minimal surface**: Prefer small, intentional public APIs. Avoid exporting internals unless they are part of the stable contract.
+- **Dependencies**: Prefer **fewer and lighter** dependencies; justify new deps in PR/commit context.
+
+## Releases
+
+- Releases use **scoped git tags** (`<package>/vX.Y.Z`) and **Conventional Commits**; see [.cursor/rules/working-with-git.mdc](.cursor/rules/working-with-git.mdc).
+
+When in doubt, optimize for **clarity, testability, and JSR consumers** (docs + types + score), not only for “it works locally.”
