@@ -1,32 +1,59 @@
+/**
+ * @module
+ * Core {@linkcode Subway} router, grouping APIs, and route type contracts for custom route classes.
+ */
+
 import { LibError } from './error.ts';
 
-type Handler<R> = R extends Route<infer I, infer O> ? (sig: I) => O : never;
-type Factory<R extends Route<any, any>> = (route: R) => Handler<R> | void;
-type Middleware<R extends Route<any, any>> = (route: R) => void;
+/** Dot-separated route key (for example `user.friends.get`). */
+export type SubwayAction = string;
 
-type Registry<R extends Route<unknown, unknown>> = Map<Action | undefined, R>;
+type Registry<R extends SubwayRoute<any, any>> = Map<SubwayAction | undefined, R>;
 
-type Action = string;
-
-export type SubwayNode<R extends Route<any, any>> = {
-  cast(action: Action, factory: Factory<R>): R;
-  add(action: Action, handler: Handler<R>): R;
-  group(prefix: Action, callback: (group: SubwayGroup<R>) => void): void;
-  use(middleware: Middleware<R>): void;
-  inject(prefix: Action, bundle: Bundle<R>): void;
-};
-
-type Route<I, O> = {
+/**
+ * Minimal contract implemented by route classes used with {@linkcode Subway}.
+ * @template I Handler input.
+ * @template O Handler output.
+ */
+export type SubwayRoute<I, O> = {
   execute(input: I): O;
   set_handler(handler: (sig: I) => O): void;
 };
 
-type AnyRoute = Route<any, any>;
+/**
+ * Handler signature inferred from a route type: input type `I` to output type `O`.
+ * @template R Route class type.
+ */
+export type SubwayHandler<R extends SubwayRoute<any, any>> = R extends SubwayRoute<infer I, infer O>
+  ? (sig: I) => O
+  : never;
 
-export type { AnyRoute as SubwayAnyRoute, Route as SubwayRoute };
+/**
+ * Factory that receives a route instance and may return a handler or configure the route only.
+ * @template R Route class type.
+ */
+export type SubwayFactory<R extends SubwayRoute<any, any>> = (route: R) => SubwayHandler<R> | void;
 
-type RC<R extends Route<any, any>> = {
-  new (handler?: Handler<R>): R;
+/** Middleware invoked for each route as it is registered. */
+export type SubwayMiddleware<R extends SubwayRoute<any, any>> = (route: R) => void;
+
+/** Any route type compatible with {@linkcode Subway}. */
+export type SubwayAnyRoute = SubwayRoute<any, any>;
+
+/**
+ * API surface shared by the root router and nested {@linkcode SubwayGroup} scopes.
+ * @template R Route class type.
+ */
+export type SubwayNode<R extends SubwayRoute<any, any>> = {
+  cast(action: SubwayAction, factory: SubwayFactory<R>): R;
+  add(action: SubwayAction, handler: SubwayHandler<R>): R;
+  group(prefix: SubwayAction, callback: (group: SubwayGroup<R>) => void): void;
+  use(middleware: SubwayMiddleware<R>): void;
+  inject(prefix: SubwayAction, bundle: Bundle<R>): void;
+};
+
+type RC<R extends SubwayRoute<any, any>> = {
+  new (handler?: SubwayHandler<R>): R;
 };
 
 /**
@@ -86,13 +113,21 @@ type RC<R extends Route<any, any>> = {
  * });
  * ```
  */
-export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
+export class Subway<R extends SubwayAnyRoute = SubwayAnyRoute> implements SubwayNode<R> {
   private registry: Registry<R> = new Map();
-  private middlewares: Middleware<R>[] = [];
+  private middlewares: SubwayMiddleware<R>[] = [];
 
+  /**
+   * Creates a router; each registered route is constructed with your route class.
+   * @param Route Route class constructor (for example your `SimpleRoute` subclass) used to instantiate routes.
+   */
   constructor(private Route: RC<R>) {}
 
-  create_interceptor(middleware: Middleware<R>): Middleware<R> {
+  /**
+   * Wraps route-level middleware so it can be applied to a {@linkcode SubwayGroup} or a single route.
+   * @param middleware Middleware to run when routes are registered.
+   */
+  create_interceptor(middleware: SubwayMiddleware<R>): SubwayMiddleware<R> {
     return (routeOrGroup: R | SubwayGroup<R>) => {
       if (routeOrGroup instanceof SubwayGroup) {
         routeOrGroup.use(middleware);
@@ -116,7 +151,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * });
    * ```
    */
-  add(action: Action, handler: Handler<R>): R {
+  add(action: SubwayAction, handler: SubwayHandler<R>): R {
     const route = new this.Route(handler) as R;
     for (const middleware of this.middlewares) middleware(route);
     this.registry.set(action, route);
@@ -135,7 +170,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * });
    * ```
    */
-  cast_root(factory: Factory<R>): R {
+  cast_root(factory: SubwayFactory<R>): R {
     return this.cast(undefined!, factory);
   }
 
@@ -153,7 +188,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * });
    * ```
    */
-  cast(action: Action, factory: Factory<R>): R {
+  cast(action: SubwayAction, factory: SubwayFactory<R>): R {
     if (this.registry.has(action)) {
       throw new LibError().set_internal({ code: 'router_action_handler_already_exist', action });
     }
@@ -215,7 +250,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * Router.inject('bundle', bundle);
    * ```
    */
-  inject(prefix: Action, bundle: Bundle<R>): void {
+  inject(prefix: SubwayAction, bundle: Bundle<R>): void {
     for (const [action, route] of bundle.routes.registry.entries()) {
       this.registry.set(action === undefined ? prefix : `${prefix}.${action}`, route);
     }
@@ -231,7 +266,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * });
    * ```
    */
-  use(middleware: Middleware<R>): void {
+  use(middleware: SubwayMiddleware<R>): void {
     this.middlewares.push(middleware);
   }
 
@@ -261,7 +296,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * }
    * ```
    */
-  through(): IterableIterator<[Action | undefined, R]> {
+  through(): IterableIterator<[SubwayAction | undefined, R]> {
     return this.registry.entries();
   }
 
@@ -291,10 +326,15 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
  * });
  * ```
  */
-class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
-  private middlewares: Middleware<R>[] = [];
+export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<R> {
+  private middlewares: SubwayMiddleware<R>[] = [];
 
-  constructor(private parent: SubwayNode<R>, private prefix: Action) {}
+  /**
+   * Creates a scoped group that prefixes every registered action with `prefix`.
+   * @param parent Parent router or group that receives prefixed registrations.
+   * @param prefix Dot-separated prefix for nested actions.
+   */
+  constructor(private parent: SubwayNode<R>, private prefix: SubwayAction) {}
 
   /**
    * Casts a new route with the specified action using the provided factory.
@@ -312,7 +352,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * });
    * ```
    */
-  cast(action: Action, factory: Factory<R>): R {
+  cast(action: SubwayAction, factory: SubwayFactory<R>): R {
     const route = this.parent.cast(`${this.prefix}.${action}`, factory) as R;
     for (const middleware of this.middlewares) middleware(route);
     return route;
@@ -330,7 +370,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * });
    * ```
    */
-  add(action: Action, handler: Handler<R>): R {
+  add(action: SubwayAction, handler: SubwayHandler<R>): R {
     const route = this.parent.add(`${this.prefix}.${action}`, handler) as R;
     for (const middleware of this.middlewares) middleware(route);
     return route;
@@ -348,7 +388,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * });
    * ```
    */
-  cast_root(factory: Factory<R>): R {
+  cast_root(factory: SubwayFactory<R>): R {
     const route = this.parent.cast(this.prefix, factory) as R;
     for (const middleware of this.middlewares) middleware(route);
     return route;
@@ -363,7 +403,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * scope.add_root((input: string) => `Sub Root Handled: ${input}`);
    * ```
    */
-  add_root(handler: Handler<R>): R {
+  add_root(handler: SubwayHandler<R>): R {
     const route = this.parent.add(this.prefix, handler) as R;
     for (const middleware of this.middlewares) middleware(route);
     return route;
@@ -392,7 +432,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * scope.inject('prefix', bundle);
    * ```
    */
-  inject(prefix: Action, bundle: Bundle<R>): void {
+  inject(prefix: SubwayAction, bundle: Bundle<R>): void {
     this.parent.inject(`${this.prefix}.${prefix}`, bundle);
   }
 
@@ -421,7 +461,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * });
    * ```
    */
-  group(prefix: Action, callback: (group: SubwayGroup<R>) => void): void {
+  group(prefix: SubwayAction, callback: (group: SubwayGroup<R>) => void): void {
     callback(new SubwayGroup<R>(this.parent, `${this.prefix}.${prefix}`));
   }
 
@@ -435,7 +475,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * });
    * ```
    */
-  use(middleware: Middleware<R>): void {
+  use(middleware: SubwayMiddleware<R>): void {
     this.middlewares.push(middleware);
   }
 }
@@ -448,7 +488,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
  * const bundle = new Bundle(Router);
  * ```
  */
-class Bundle<R extends AnyRoute> {
+export class Bundle<R extends SubwayAnyRoute> {
   /**
    * Creates an instance of Bundle.
    * @param routes The Subway instance containing the routes.

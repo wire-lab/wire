@@ -1,6 +1,7 @@
 {
   "name": "@wire/subway",
   "version": "1.0.0",
+  "description": "Type-safe, composable router for routes, middleware, nested groups, and route bundles.",
   "license": "MIT",
   "exports": {
     ".": "./mod.ts",

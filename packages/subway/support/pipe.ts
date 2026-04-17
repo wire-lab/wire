@@ -1,4 +1,9 @@
 /**
+ * @module
+ * `pipe` composes {@linkcode PipeMiddleware} functions into a single call chain (used by route implementations).
+ */
+
+/**
  * Represents a middleware function in a pipeline.
  * @template T The type of the context.
  * @template R The type of the result.
