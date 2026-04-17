@@ -108,7 +108,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * @param handler The handler function for the route.
    * @returns The created route.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * Router.group('user', (scope) => {
    *   scope.add('get', async (ctx) => {
    *     return new Response('User Get');
@@ -128,10 +128,10 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * @param factory The factory function to create the route handler.
    * @returns The created route.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * Router.cast_root((route) => {
    *   route.set_handler((input: string) => `Root Casted: ${input}`);
- *   return (input: string) => `Factory Handled: ${input}`;
+   *   return (input: string) => `Factory Handled: ${input}`;
    * });
    * ```
    */
@@ -146,16 +146,17 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * @returns The created route.
    * @throws {LibError} If the action already exists.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * Router.cast('example.cast', (route) => {
    *   route.set_handler((input: string) => `Casted: ${input}`);
- *   return (input: string) => `Factory Handled: ${input}`;
+   *   return (input: string) => `Factory Handled: ${input}`;
    * });
    * ```
    */
   cast(action: Action, factory: Factory<R>): R {
-    if (this.registry.has(action))
+    if (this.registry.has(action)) {
       throw new LibError().set_internal({ code: 'router_action_handler_already_exist', action });
+    }
 
     const route = new this.Route() as R;
 
@@ -174,7 +175,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * @param prefix The prefix for the group.
    * @param factory The callback function to define the group.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * Router.group('user', (scope) => {
    *   scope.group('friends', (scope) => {
    *     scope.add('get', async (ctx) => {
@@ -193,7 +194,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * @param factory The callback function to define the bundle of routes.
    * @returns The created bundle of routes.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * const bundle = Router.bundle((group) => {
    *   group.add('bundle.action', (input: string) => `Bundle Action: ${input}`);
    * });
@@ -210,7 +211,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * @param prefix The prefix for the injected routes.
    * @param bundle The bundle of routes to inject.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * Router.inject('bundle', bundle);
    * ```
    */
@@ -224,7 +225,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * Adds a middleware to the router.
    * @param middleware The middleware function to add.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * Router.use((route) => {
    *   console.log(`Middleware applied to route`);
    * });
@@ -239,7 +240,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * @param action The action associated with the route.
    * @returns The found route or undefined if not found.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * const route = Router.find('example.action');
    * if (route) {
    *   console.log(route.execute('test input')); // Output: Handled: test input
@@ -254,7 +255,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
    * Returns an iterator for all routes in the router.
    * @returns An iterator for all routes.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * for (const [action, route] of Router.through()) {
    *   console.log(action, route);
    * }
@@ -267,7 +268,7 @@ export class Subway<R extends AnyRoute = AnyRoute> implements SubwayNode<R> {
   /**
    * Clears all routes from the router.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * Router.clear();
    * ```
    */
@@ -301,7 +302,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * @param factory The factory function to create the route handler.
    * @returns The created route.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * scope.cast('set', (route) => {
    *   const obtain = route.obtain_valid_json({ validate: async (data) => data });
    *
@@ -323,7 +324,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * @param handler The handler function for the route.
    * @returns The created route.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * scope.add('get', async (ctx) => {
    *   return new Response('User Get');
    * });
@@ -340,10 +341,10 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * @param factory The factory function to create the route handler.
    * @returns The created route.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * scope.cast_root((route) => {
    *   route.set_handler((input: string) => `Sub Root Casted: ${input}`);
-  *   return (input: string) => `Factory Handled: ${input}`;
+   *   return (input: string) => `Factory Handled: ${input}`;
    * });
    * ```
    */
@@ -358,7 +359,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * @param handler The handler function for the route.
    * @returns The created route.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * scope.add_root((input: string) => `Sub Root Handled: ${input}`);
    * ```
    */
@@ -372,7 +373,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * Encapsulates child routes, useful for adding specific middlewares to a group of routes without a mutual parent name.
    * @param callback The callback function to define the sub-router.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * scope.wrap((group) => {
    *   group.add('wrapped.action', (input: string) => `Wrapped Action: ${input}`);
    * });
@@ -387,7 +388,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * @param prefix The prefix for the injected routes.
    * @param bundle The bundle of routes to inject.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * scope.inject('prefix', bundle);
    * ```
    */
@@ -399,7 +400,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * Injects a bundle of routes as root routes.
    * @param bundle The bundle of routes to inject.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * scope.inject_root(bundle);
    * ```
    */
@@ -412,7 +413,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * @param prefix The prefix for the group.
    * @param callback The callback function to define the group.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * scope.group('prefix', (scope) => {
    *   scope.use(some_middleware);
    *
@@ -428,7 +429,7 @@ class SubwayGroup<R extends Route<any, any>> implements SubwayNode<R> {
    * Adds a middleware to the sub-router.
    * @param middleware The middleware function to add.
    * @example
-  * ```ts ignore
+   * ```ts ignore
    * scope.use((route) => {
    *   console.log(`Middleware applied to sub-route`);
    * });

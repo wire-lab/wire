@@ -1,5 +1,10 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { LogLevelNameMap, type Logger as ILogger, type LoggerTransport, type LogLevel } from './definitions.ts';
+import {
+  type Logger as ILogger,
+  type LoggerTransport,
+  type LogLevel,
+  LogLevelNameMap,
+} from './definitions.ts';
 
 // deno-lint-ignore no-explicit-any
 type Rsa = Record<string, any>;
@@ -57,7 +62,7 @@ export const create_logger = ({ transport, format_error, level }: InitOpts): ILo
     constructor(
       protected send: LoggerTransport,
       public readonly meta: Meta,
-      protected _stack?: string
+      protected _stack?: string,
     ) {}
 
     declare emergency: (data: Data) => void;
@@ -128,12 +133,11 @@ export const create_logger = ({ transport, format_error, level }: InitOpts): ILo
     // Cast to any to avoid "meta" readonly error when iterating
     // This is safe because we are dynamically building the class prototype
     // deno-lint-ignore no-explicit-any
-    (Logger.prototype as any)[name] =
-      lvl <= level
-        ? function (this: ILogger, data: Data) {
-            this.log(lvl, data);
-          }
-        : function () {};
+    (Logger.prototype as any)[name] = lvl <= level
+      ? function (this: ILogger, data: Data) {
+        this.log(lvl, data);
+      }
+      : function () {};
   }
 
   return new Logger(transport, {});

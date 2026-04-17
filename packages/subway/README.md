@@ -1,12 +1,17 @@
 # @wire/subway
 
-A type-safe, composable router for building complex application logic. Subway allows you to define routes, middleware, and sub-routers with ease, providing a flexible structure for your backend services.
+A type-safe, composable router for building complex application logic. Subway allows you to define
+routes, middleware, and sub-routers with ease, providing a flexible structure for your backend
+services.
 
 ## Features
 
-- **Type-Safe**: Built with TypeScript generics to ensure type safety across your routes and handlers.
-- **Composable**: Use `group` routers and `bundles` to organize your application logic into modular components.
-- **Middleware Support**: detailed control over request processing with middleware at the global, sub-router, and route levels.
+- **Type-Safe**: Built with TypeScript generics to ensure type safety across your routes and
+  handlers.
+- **Composable**: Use `group` routers and `bundles` to organize your application logic into modular
+  components.
+- **Middleware Support**: detailed control over request processing with middleware at the global,
+  sub-router, and route levels.
 - **Route Injection**: Easily inject bundles of routes into different parts of your application.
 - **Flexible Handlers**: Define custom route types and handlers to fit your specific needs.
 
@@ -104,8 +109,8 @@ Bundles allow you to define routes independently and inject them later.
 
 ```ts ignore
 const authBundle = Router.bundle((group) => {
-  group.add('login', async (ctx) => { /* ... */ });
-  group.add('logout', async (ctx) => { /* ... */ });
+  group.add('login', async (ctx) => {/* ... */});
+  group.add('logout', async (ctx) => {/* ... */});
 });
 
 // Inject into the main router under 'auth' prefix
@@ -122,13 +127,13 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   // Map URL path to action name (e.g., /user/get -> user.get)
   const action = url.pathname.slice(1).replace(/\//g, '.');
-  
+
   const route = Router.find(action);
-  
+
   if (route) {
     return await route.execute(new Context(req));
   }
-  
+
   return new Response('Not Found', { status: 404 });
 });
 ```

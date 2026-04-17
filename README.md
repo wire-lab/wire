@@ -1,12 +1,15 @@
 # @wire Libraries Monorepo
 
-This repository hosts the source code for `@wire` TypeScript libraries, published to [JSR](https://jsr.io). It is managed as a [Deno Workspace](https://docs.deno.com/runtime/fundamentals/workspaces/).
+This repository hosts the source code for `@wire` TypeScript libraries, published to
+[JSR](https://jsr.io). It is managed as a
+[Deno Workspace](https://docs.deno.com/runtime/fundamentals/workspaces/).
 
 ## 📦 Packages
 
 All active packages are located in the `packages/` directory.
 
-- [`@wire/logger`](packages/logger/): A blazing fast, strongly-typed logger with async context support.
+- [`@wire/logger`](packages/logger/): A blazing fast, strongly-typed logger with async context
+  support.
 
 > **Note**: The `legacy/` directory contains deprecated code and should be ignored.
 
@@ -50,23 +53,26 @@ package-name/vX.Y.Z
 ```
 
 **Examples:**
+
 - `logger/v1.0.0` → Triggers release for `@wire/logger` version `1.0.0`.
 - `utils/v1.2.3` → Triggers release for `@wire/utils` version `1.2.3`.
 
 ### Publishing Process
 
-1.  Update the `version` in the package's `deno.json`.
-2.  Commit the change using [Conventional Commits](https://www.conventionalcommits.org/).
-    ```bash
-    git commit -m "feat(logger): add new transport"
-    ```
-3.  Create the tag:
-    ```bash
-    git tag logger/v1.1.0
-    ```
-4.  Push the tag:
-    ```bash
-    git push origin logger/v1.1.0
-    ```
+1. Update the `version` in the package's `deno.json`.
+2. Commit the change using [Conventional Commits](https://www.conventionalcommits.org/).
+   ```bash
+   git commit -m "feat(logger): add new transport"
+   ```
+3. Create the tag:
+   ```bash
+   git tag logger/v1.1.0
+   ```
+4. Push the tag:
+   ```bash
+   git push origin logger/v1.1.0
+   ```
 
-The **Publish** workflow will run `deno publish` from the workspace root. It uses OIDC (OpenID Connect) to authenticate securely with JSR without requiring manual secrets. Deno will automatically detect which packages match the current version on JSR and publish only the updated ones.
+The **Publish** workflow will run `deno publish` from the workspace root. It uses OIDC (OpenID
+Connect) to authenticate securely with JSR without requiring manual secrets. Deno will automatically
+detect which packages match the current version on JSR and publish only the updated ones.

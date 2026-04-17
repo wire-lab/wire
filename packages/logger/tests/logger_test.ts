@@ -1,9 +1,11 @@
 import { assertEquals } from 'jsr:@std/assert@0.205.0';
 import { assertSpyCall, spy } from 'jsr:@std/testing@0.205.0/mock';
-import { create_logger, LogLevel, type LoggerTransport } from '../mod.ts';
+import { create_logger, type LoggerTransport, LogLevel } from '../mod.ts';
 
 Deno.test('Logger - Basic Logging', () => {
-  const transport = spy((_lvl: LogLevel, _data: Record<string, any>, _meta: Record<string, any>) => {});
+  const transport = spy(
+    (_lvl: LogLevel, _data: Record<string, any>, _meta: Record<string, any>) => {},
+  );
   const logger = create_logger({
     transport: transport as unknown as LoggerTransport,
     format_error: (e) => e,
@@ -17,7 +19,9 @@ Deno.test('Logger - Basic Logging', () => {
 });
 
 Deno.test('Logger - Level Filtering', () => {
-  const transport = spy((_lvl: LogLevel, _data: Record<string, any>, _meta: Record<string, any>) => {});
+  const transport = spy(
+    (_lvl: LogLevel, _data: Record<string, any>, _meta: Record<string, any>) => {},
+  );
   const logger = create_logger({
     transport: transport as unknown as LoggerTransport,
     format_error: (e) => e,
@@ -34,7 +38,9 @@ Deno.test('Logger - Level Filtering', () => {
 });
 
 Deno.test('Logger - Metadata', () => {
-  const transport = spy((_lvl: LogLevel, _data: Record<string, any>, _meta: Record<string, any>) => {});
+  const transport = spy(
+    (_lvl: LogLevel, _data: Record<string, any>, _meta: Record<string, any>) => {},
+  );
   const logger = create_logger({
     transport: transport as unknown as LoggerTransport,
     format_error: (e) => e,
@@ -50,7 +56,9 @@ Deno.test('Logger - Metadata', () => {
 });
 
 Deno.test('Logger - Cloning', () => {
-  const transport = spy((_lvl: LogLevel, _data: Record<string, any>, _meta: Record<string, any>) => {});
+  const transport = spy(
+    (_lvl: LogLevel, _data: Record<string, any>, _meta: Record<string, any>) => {},
+  );
   const logger = create_logger({
     transport: transport as unknown as LoggerTransport,
     format_error: (e) => e,
@@ -76,7 +84,9 @@ Deno.test('Logger - Cloning', () => {
 });
 
 Deno.test('Logger - Stack/Code', () => {
-  const transport = spy((_lvl: LogLevel, _data: Record<string, any>, _meta: Record<string, any>) => {});
+  const transport = spy(
+    (_lvl: LogLevel, _data: Record<string, any>, _meta: Record<string, any>) => {},
+  );
   const logger = create_logger({
     transport: transport as unknown as LoggerTransport,
     format_error: (e) => e,
@@ -86,7 +96,7 @@ Deno.test('Logger - Stack/Code', () => {
   logger.stack('api');
   logger.stack('user');
   logger.info({ msg: 'test' });
-  
+
   assertSpyCall(transport, 0, {
     args: [LogLevel.info, { msg: 'test', code: 'api.user' }, {}],
   });
@@ -99,7 +109,9 @@ Deno.test('Logger - Stack/Code', () => {
 });
 
 Deno.test('Logger - Async Context (Cast)', async () => {
-  const transport = spy((_lvl: LogLevel, _data: Record<string, any>, _meta: Record<string, any>) => {});
+  const transport = spy(
+    (_lvl: LogLevel, _data: Record<string, any>, _meta: Record<string, any>) => {},
+  );
   const logger = create_logger({
     transport: transport as unknown as LoggerTransport,
     format_error: (e) => e,
@@ -111,9 +123,9 @@ Deno.test('Logger - Async Context (Cast)', async () => {
   await logger.cast(async (l) => {
     l.upd_meta({ id: 'child' }); // Should only affect this context
     l.info({ msg: 'inside' });
-    
+
     // Simulate async work
-    await new Promise(resolve => setTimeout(resolve, 1));
+    await new Promise((resolve) => setTimeout(resolve, 1));
     l.info({ msg: 'inside_after' });
   });
 
@@ -123,7 +135,7 @@ Deno.test('Logger - Async Context (Cast)', async () => {
   assertSpyCall(transport, 0, {
     args: [LogLevel.info, { msg: 'inside' }, { id: 'child' }],
   });
-  
+
   // 2. Inside after await
   assertSpyCall(transport, 1, {
     args: [LogLevel.info, { msg: 'inside_after' }, { id: 'child' }],

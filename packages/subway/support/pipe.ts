@@ -33,7 +33,7 @@ const noop = () => {};
  * console.log(result); // Output: 'start12'
  * ```
  */
-export const pipe = <T = unknown, R = unknown>(list: PipeMiddleware<T, R>[]): ((ctx: T) => R) => {
+export const pipe = <T = unknown, R = unknown>(list: PipeMiddleware<T, R>[]): (ctx: T) => R => {
   return list.reduceRight((next, current) => {
     return function pipe(ctx: T) {
       return current(ctx, next);

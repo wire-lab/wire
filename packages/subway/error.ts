@@ -1,8 +1,7 @@
-
 type Rsu = Record<string, unknown>;
 
 export class LibError extends Error {
-  private declare internal: Rsu;
+  declare private internal: Rsu;
 
   set_message(message: string): this {
     this.message = message;

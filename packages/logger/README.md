@@ -1,10 +1,13 @@
 # @wire/logger
 
-A blazing fast, flexible, strongly-typed logger for Deno, designed for modern applications. It features zero-dependency (by default), async context propagation for request tracking, strict typing, and a composable architecture.
+A blazing fast, flexible, strongly-typed logger for Deno, designed for modern applications. It
+features zero-dependency (by default), async context propagation for request tracking, strict
+typing, and a composable architecture.
 
 ## Features
 
-- **Async Context Support**: Automatically propagate metadata (like `requestId`) across async operations without passing logger instances manually.
+- **Async Context Support**: Automatically propagate metadata (like `requestId`) across async
+  operations without passing logger instances manually.
 - **Strongly Typed**: Built with TypeScript in mind.
 - **Flexible Transports**: Implement your own output destination easily.
 - **Zero Dependencies**: Core functionality relies only on standard libraries.
@@ -22,7 +25,9 @@ deno add @wire/logger
 The logger is built around the concept of a **Global Logger** and **Contextual Loggers**.
 
 - **Global Logger**: The base logger instance initialized at application start.
-- **Async Context**: Using `AsyncLocalStorage`, the logger can maintain state (metadata) unique to a specific async execution flow (like an HTTP request). `use_logger()` always returns the correct logger for the current context.
+- **Async Context**: Using `AsyncLocalStorage`, the logger can maintain state (metadata) unique to a
+  specific async execution flow (like an HTTP request). `use_logger()` always returns the correct
+  logger for the current context.
 
 ## Usage
 
@@ -31,7 +36,7 @@ The logger is built around the concept of a **Global Logger** and **Contextual L
 Initialize the logger at the entry point of your application.
 
 ```ts ignore
-import { init_logger, create_logger, LogLevel, LogLevelNameMap } from '@wire/logger';
+import { create_logger, init_logger, LogLevel, LogLevelNameMap } from '@wire/logger';
 
 // Initialize the global logger with a simple JSON stdout transport
 init_logger({
@@ -45,7 +50,7 @@ init_logger({
     console.log(output);
   },
   format_error: (e) => e, // Optional: transform errors before logging
-  level: LogLevel.info,   // Set the minimum log level
+  level: LogLevel.info, // Set the minimum log level
 });
 ```
 
@@ -64,7 +69,8 @@ log.error({ msg: 'Database connection failed', error: new Error('Connection time
 
 ### 3. Async Context (Request Tracking)
 
-To track logs across an async flow (e.g., an HTTP request), use `cast_logger`. All logs within the callback (and any async functions called by it) will share the same logger instance and metadata.
+To track logs across an async flow (e.g., an HTTP request), use `cast_logger`. All logs within the
+callback (and any async functions called by it) will share the same logger instance and metadata.
 
 ```ts ignore
 import { cast_logger } from '@wire/logger';
@@ -72,10 +78,10 @@ import { cast_logger } from '@wire/logger';
 Deno.serve(async (req) => {
   return await cast_logger(async (log) => {
     // Attach metadata to this request's logger
-    log.upd_meta({ 
-      requestId: crypto.randomUUID(), 
-      method: req.method, 
-      url: req.url 
+    log.upd_meta({
+      requestId: crypto.randomUUID(),
+      method: req.method,
+      url: req.url,
     });
 
     log.info({ msg: 'Request received' });
@@ -114,35 +120,39 @@ log.info({ msg: 'User validated' });
 ## API Reference
 
 ### `init_logger(opts)`
+
 Initializes the global logger. Must be called once at startup.
 
-| Option | Type | Description |
-|---|---|---|
-| `transport` | `(lvl: LogLevel, data: Data, meta: Data) => void` | Function to handle log output. |
-| `format_error` | `(e: unknown) => unknown` | Function to format errors before they are passed to the transport. |
-| `level` | `LogLevel` | Minimum log level to output. |
+| Option         | Type                                              | Description                                                        |
+| -------------- | ------------------------------------------------- | ------------------------------------------------------------------ |
+| `transport`    | `(lvl: LogLevel, data: Data, meta: Data) => void` | Function to handle log output.                                     |
+| `format_error` | `(e: unknown) => unknown`                         | Function to format errors before they are passed to the transport. |
+| `level`        | `LogLevel`                                        | Minimum log level to output.                                       |
 
 ### `use_logger()`
-Returns the current contextual logger. If called outside of a `cast_logger` context, returns the global logger.
+
+Returns the current contextual logger. If called outside of a `cast_logger` context, returns the
+global logger.
 
 ### `cast_logger(callback)`
+
 Creates a new logger context. The callback receives the new logger instance.
 
 ### `Logger` Instance Methods
 
-| Method | Description |
-|---|---|
-| `emergency(data)` | Log at `emergency` level (0) |
-| `alert(data)` | Log at `alert` level (1) |
-| `error(data)` | Log at `error` level (2) |
-| `warning(data)` | Log at `warning` level (3) |
-| `info(data)` | Log at `info` level (4) |
-| `debug1(data)` | Log at `debug1` level (5) |
-| `debug2(data)` | Log at `debug2` level (6) |
-| `debug3(data)` | Log at `debug3` level (7) |
-| `upd_meta(data)` | Merge new metadata into the current logger state. |
-| `stack(str)` | Append a string to the `code` field (dot-separated). |
-| `clone()` | Create a shallow copy of the logger. |
+| Method                  | Description                                           |
+| ----------------------- | ----------------------------------------------------- |
+| `emergency(data)`       | Log at `emergency` level (0)                          |
+| `alert(data)`           | Log at `alert` level (1)                              |
+| `error(data)`           | Log at `error` level (2)                              |
+| `warning(data)`         | Log at `warning` level (3)                            |
+| `info(data)`            | Log at `info` level (4)                               |
+| `debug1(data)`          | Log at `debug1` level (5)                             |
+| `debug2(data)`          | Log at `debug2` level (6)                             |
+| `debug3(data)`          | Log at `debug3` level (7)                             |
+| `upd_meta(data)`        | Merge new metadata into the current logger state.     |
+| `stack(str)`            | Append a string to the `code` field (dot-separated).  |
+| `clone()`               | Create a shallow copy of the logger.                  |
 | `dispatch(lvl, action)` | Run an async action and log any errors automatically. |
 
 ### `LogLevel` Enum
@@ -162,7 +172,8 @@ export enum LogLevel {
 
 ### `LogLevelNameMap`
 
-A `Map<LogLevel, string>` providing the string name for each log level (e.g., `LogLevel.info` -> "info").
+A `Map<LogLevel, string>` providing the string name for each log level (e.g., `LogLevel.info` ->
+"info").
 
 ## Platform Examples
 

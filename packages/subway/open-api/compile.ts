@@ -1,5 +1,5 @@
 import { Subway } from '../subway.ts';
-import { OpenApiRoute, type HttpMethod, type OpenApiRouteMeta } from './route.ts';
+import { type HttpMethod, OpenApiRoute, type OpenApiRouteMeta } from './route.ts';
 
 type OpenAPIServer = { url: string; description?: string };
 
@@ -73,7 +73,7 @@ const to_operation = (meta?: OpenApiRouteMeta): OpenAPIOperation => {
 };
 
 export const compile_open_api_specification = (
-  subway: Subway<OpenApiRoute<unknown, unknown>>
+  subway: Subway<OpenApiRoute<unknown, unknown>>,
 ): OpenAPIDocument => {
   const doc: OpenAPIDocument = {
     openapi: '3.0.3',
