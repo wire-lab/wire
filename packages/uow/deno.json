@@ -1,7 +1,10 @@
 {
   "name": "@wire/uow",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Unit of Work with async context propagation for coordinating multiple transactional resources.",
-  "exports": "./mod.ts",
+  "exports": {
+    ".": "./mod.ts",
+    "./connectors/spawnable.ts": "./connectors/spawnable.ts"
+  },
   "license": "MIT"
 }
