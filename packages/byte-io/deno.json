@@ -1,0 +1,12 @@
+{
+  "name": "@wire/byte-io",
+  "version": "0.1.0",
+  "description": "Plugin-composed Uint8Array reader and writer for building small, explicit binary protocols.",
+  "exports": {
+    ".": "./mod.ts",
+    "./plugins/pack": "./plugins/pack.ts",
+    "./plugins/standard": "./plugins/standard.ts",
+    "./plugins/strict-base64url": "./plugins/strict-base64url.ts"
+  },
+  "license": "MIT"
+}

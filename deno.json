@@ -1,5 +1,6 @@
 {
   "workspace": [
+    "./packages/byte-io",
     "./packages/logger",
     "./packages/subway",
     "./packages/uow"

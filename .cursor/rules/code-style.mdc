@@ -1,0 +1,42 @@
+---
+description: Project naming and code style conventions
+alwaysApply: true
+---
+
+# Code Style
+
+## Properties and Variables
+
+- ALWAYS use lowerCamelCase for properties and variables.
+- Examples from this codebase: `base64urlValue`, `resolvedPlugins`, `byteLength`, `createdAt`.
+- NEVER use snake_case, PascalCase, or kebab-case for properties and variables.
+
+## Methods and Functions
+
+- ALWAYS use snake_case for methods and functions.
+- Examples from this codebase: `create_b_io()`, `create_b_plugin()`, `n_bytes()`, `create_transaction()`.
+- Compact codec names such as `uint8()`, `float32()`, and `b64u()` are allowed when they are established protocol terms.
+- NEVER use lowerCamelCase, PascalCase, or kebab-case for methods and functions.
+
+## Classes
+
+- ALWAYS use UpperCamelCase (PascalCase) for classes.
+- Examples from this codebase: `BaseBReader`, `BaseBWriter`, `TransactionMonitor`, `TonClient`.
+- NEVER use snake_case, lowerCamelCase, or kebab-case for classes.
+
+## File And Folder Names
+
+- ALWAYS use kebab-case (lowercase with hyphens) for file and folder names.
+- Examples from this codebase: `byte-io.ts`, `strict-base64url.ts`, `user-repository.ts`.
+- NEVER use PascalCase, lowerCamelCase, or snake_case for file or folder names.
+
+## Log Codes
+
+- ALWAYS use snake_case with dot notation for hierarchical structure.
+- Examples: `user.registration.started`, `database.connection.failed`, `ton.transaction.processing.memo_extraction`.
+- NEVER use lowerCamelCase, PascalCase, or kebab-case for log codes.
+
+## Constants
+
+- ALWAYS use UPPER_SNAKE_CASE for constants.
+- Examples: `MAX_RETRY_ATTEMPTS`, `API_BASE_URL`, `DEFAULT_TIMEOUT`.
