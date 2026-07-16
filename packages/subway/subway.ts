@@ -5,7 +5,10 @@
 
 import { LibError } from './error.ts';
 
-/** Dot-separated route key (for example `user.friends.get`). */
+/**
+ * Route key built from a prefix chain joined by the router separator (for example `user.friends.get`).
+ * The separator defaults to `.` and is configurable via {@linkcode SubwayOptions}.
+ */
 export type SubwayAction = string;
 
 type Registry<R extends SubwayRoute<any, any>> = Map<SubwayAction | undefined, R>;
@@ -54,6 +57,12 @@ export type SubwayNode<R extends SubwayRoute<any, any>> = {
 
 type RC<R extends SubwayRoute<any, any>> = {
   new (handler?: SubwayHandler<R>): R;
+};
+
+/** Router options. */
+export type SubwayOptions = {
+  /** Separator placed between prefixes and actions. Defaults to `.`. */
+  separator?: string;
 };
 
 /**
@@ -117,11 +126,17 @@ export class Subway<R extends SubwayAnyRoute = SubwayAnyRoute> implements Subway
   private registry: Registry<R> = new Map();
   private middlewares: SubwayMiddleware<R>[] = [];
 
+  /** Separator placed between prefixes and actions. */
+  readonly separator: string;
+
   /**
    * Creates a router; each registered route is constructed with your route class.
    * @param Route Route class constructor (for example your `SimpleRoute` subclass) used to instantiate routes.
+   * @param options Router options; `separator` defaults to `.`.
    */
-  constructor(private Route: RC<R>) {}
+  constructor(private Route: RC<R>, options?: SubwayOptions) {
+    this.separator = options?.separator ?? '.';
+  }
 
   /**
    * Wraps route-level middleware so it can be applied to a {@linkcode SubwayGroup} or a single route.
@@ -221,7 +236,7 @@ export class Subway<R extends SubwayAnyRoute = SubwayAnyRoute> implements Subway
    * ```
    */
   group(prefix: string, factory: (group: SubwayGroup<R>) => void): void {
-    factory(new SubwayGroup<R>(this, prefix));
+    factory(new SubwayGroup<R>(this, prefix, this.separator));
   }
 
   /**
@@ -236,7 +251,7 @@ export class Subway<R extends SubwayAnyRoute = SubwayAnyRoute> implements Subway
    * ```
    */
   bundle(factory: (sub: Subway<R>) => void): Bundle<R> {
-    const sub = new Subway<R>(this.Route);
+    const sub = new Subway<R>(this.Route, { separator: this.separator });
     factory(sub);
     return new Bundle(sub);
   }
@@ -252,7 +267,10 @@ export class Subway<R extends SubwayAnyRoute = SubwayAnyRoute> implements Subway
    */
   inject(prefix: SubwayAction, bundle: Bundle<R>): void {
     for (const [action, route] of bundle.routes.registry.entries()) {
-      this.registry.set(action === undefined ? prefix : `${prefix}.${action}`, route);
+      this.registry.set(
+        action === undefined ? prefix : `${prefix}${this.separator}${action}`,
+        route,
+      );
     }
   }
 
@@ -332,9 +350,14 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
   /**
    * Creates a scoped group that prefixes every registered action with `prefix`.
    * @param parent Parent router or group that receives prefixed registrations.
-   * @param prefix Dot-separated prefix for nested actions.
+   * @param prefix Delimiter-separated prefix for nested actions.
+   * @param separator Separator placed between the prefix and nested actions; defaults to `.`.
    */
-  constructor(private parent: SubwayNode<R>, private prefix: SubwayAction) {}
+  constructor(
+    private parent: SubwayNode<R>,
+    private prefix: SubwayAction,
+    private separator: string = '.',
+  ) {}
 
   /**
    * Casts a new route with the specified action using the provided factory.
@@ -353,7 +376,7 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   cast(action: SubwayAction, factory: SubwayFactory<R>): R {
-    const route = this.parent.cast(`${this.prefix}.${action}`, factory) as R;
+    const route = this.parent.cast(`${this.prefix}${this.separator}${action}`, factory) as R;
     for (const middleware of this.middlewares) middleware(route);
     return route;
   }
@@ -371,7 +394,7 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   add(action: SubwayAction, handler: SubwayHandler<R>): R {
-    const route = this.parent.add(`${this.prefix}.${action}`, handler) as R;
+    const route = this.parent.add(`${this.prefix}${this.separator}${action}`, handler) as R;
     for (const middleware of this.middlewares) middleware(route);
     return route;
   }
@@ -420,7 +443,7 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   wrap(callback: (group: SubwayGroup<R>) => void): void {
-    callback(new SubwayGroup<R>(this.parent, this.prefix));
+    callback(new SubwayGroup<R>(this.parent, this.prefix, this.separator));
   }
 
   /**
@@ -433,7 +456,7 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   inject(prefix: SubwayAction, bundle: Bundle<R>): void {
-    this.parent.inject(`${this.prefix}.${prefix}`, bundle);
+    this.parent.inject(`${this.prefix}${this.separator}${prefix}`, bundle);
   }
 
   /**
@@ -462,7 +485,9 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   group(prefix: SubwayAction, callback: (group: SubwayGroup<R>) => void): void {
-    callback(new SubwayGroup<R>(this.parent, `${this.prefix}.${prefix}`));
+    callback(
+      new SubwayGroup<R>(this.parent, `${this.prefix}${this.separator}${prefix}`, this.separator),
+    );
   }
 
   /**

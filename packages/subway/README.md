@@ -14,6 +14,7 @@ services.
   sub-router, and route levels.
 - **Route Injection**: Easily inject bundles of routes into different parts of your application.
 - **Flexible Handlers**: Define custom route types and handlers to fit your specific needs.
+- **Custom Separator**: Join prefixes and actions with `.` or any separator you choose.
 
 ## Installation
 
@@ -44,6 +45,19 @@ class Route extends SimpleRoute<Context, Result> {
 
 // Initialize the router
 const Router = new Subway(Route);
+```
+
+The router joins group prefixes and actions with `.` by default. Pass a `separator` to use something
+else — it applies to nested groups, bundles, and injections alike:
+
+```ts ignore
+const Router = new Subway(Route, { separator: '/' });
+
+Router.group('user', (scope) => {
+  scope.add('get', async (ctx) => new Response('User Profile'));
+});
+
+Router.find('user/get');
 ```
 
 ### 2. Defining Routes
@@ -144,6 +158,8 @@ Deno.serve(async (req) => {
 
 The main router class.
 
+- `new Subway(Route, options?)`: Create a router. `options.separator` sets the string placed between
+  prefixes and actions (default `.`).
 - `add(action, handler)`: Register a route.
 - `group(prefix, callback)`: Create a sub-router (group).
 - `cast(action, factory)`: Register a route with custom configuration.
