@@ -194,6 +194,25 @@ b`,
   );
 });
 
+Deno.test('only "-" is a bullet by default', () => {
+  assertEquals(spiel('a\n+ QR'), 'a + QR');
+  assertEquals(spiel('2 + 2\n* b'), '2 + 2 * b');
+  assertEquals(spiel('a\n- x'), 'a\n- x');
+});
+
+Deno.test('bullets configures the recognized markers', () => {
+  const commonmark = spiel.withOptions({ bullets: '-*+' });
+  assertEquals(commonmark('a\n+ x'), 'a\n+ x');
+  assertEquals(commonmark('a\n* x'), 'a\n* x');
+  assertEquals(commonmark('a\n- x'), 'a\n- x');
+
+  const none = spiel.withOptions({ bullets: '' });
+  assertEquals(none('a\n- x'), 'a - x');
+  // Other block markers stay recognized.
+  assertEquals(none('a\n1. x'), 'a\n1. x');
+  assertEquals(none('a\n> x'), 'a\n> x');
+});
+
 Deno.test('withOptions leaves the base tag untouched', () => {
   const tight = spiel.withOptions({ join: '' });
   assertEquals(tight('a\nb'), 'ab');

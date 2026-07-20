@@ -14,6 +14,11 @@ export interface SpielOptions {
   paragraph?: string;
   /** Recognize markdown block markers and fences. Defaults to `true`. */
   markdown?: boolean;
+  /**
+   * Characters recognized as bullet list markers. Defaults to `'-'`; pass `'-*+'` for the full
+   * CommonMark set, or `''` to recognize no bullets at all.
+   */
+  bullets?: string;
 }
 
 /**
@@ -31,9 +36,19 @@ export interface Spiel {
 
 type ResolvedOptions = Required<SpielOptions>;
 
-const DEFAULTS: ResolvedOptions = { join: ' ', paragraph: '\n\n', markdown: true };
+const DEFAULTS: ResolvedOptions = { join: ' ', paragraph: '\n\n', markdown: true, bullets: '-' };
 
-const BLOCK = /^(?:[-*+] |\d+[.)] |#{1,6} |> |\||```|~~~)/;
+/** Characters that need escaping inside a regular expression character class. */
+const CLASS_UNSAFE = /[\\\]^-]/g;
+
+/**
+ * Builds the block marker pattern for a bullet set. Only bullets are configurable: ordered lists,
+ * headings, quotes, tables and fences never collide with prose.
+ */
+function blockPattern(bullets: string): RegExp {
+  const bullet = bullets === '' ? '' : `[${bullets.replace(CLASS_UNSAFE, '\\$&')}] |`;
+  return new RegExp(`^(?:${bullet}\\d+[.)] |#{1,6} |> |\\||\`\`\`|~~~)`);
+}
 /** ATX headings cannot span lines, so nothing may be folded into them. */
 const HEADING = /^#{1,6} /;
 const FENCE = /^(```+|~~~+)/;
@@ -173,7 +188,7 @@ function readFence(lines: string[], start: number, marker: string): [string[], n
 }
 
 /** Folds dedented lines into paragraphs of block chunks and joins everything back together. */
-function fold(lines: string[], options: ResolvedOptions, hard: string): string {
+function fold(lines: string[], options: ResolvedOptions, hard: string, block: RegExp): string {
   const paragraphs: string[] = [];
   let chunks: Chunk[] = [];
 
@@ -201,7 +216,7 @@ function fold(lines: string[], options: ResolvedOptions, hard: string): string {
       continue;
     }
 
-    const isBlock = options.markdown && BLOCK.test(body);
+    const isBlock = options.markdown && block.test(body);
     const previous = chunks.at(-1);
     if (previous && !previous.sealed && !isBlock) {
       const glue = previous.text.endsWith(hard) || body.startsWith(hard) ? '' : options.join;
@@ -222,18 +237,20 @@ function fold(lines: string[], options: ResolvedOptions, hard: string): string {
 }
 
 /** Runs the whole pipeline over one already assembled source text. */
-function render(text: string, options: ResolvedOptions, hard: string): string {
-  return fold(dedent(text.replace(/\r\n/g, '\n')), options, hard);
+function render(text: string, options: ResolvedOptions, hard: string, block: RegExp): string {
+  return fold(dedent(text.replace(/\r\n/g, '\n')), options, hard, block);
 }
 
 function create(options: ResolvedOptions): Spiel {
+  // Built once per tag rather than per call: the bullet set only changes through `withOptions`.
+  const block = blockPattern(options.bullets);
   const tag = (
     first: TemplateStringsArray | string,
     ...values: unknown[]
   ): string => {
     if (typeof first === 'string') {
       const [hard] = pickSentinels(first, 1);
-      return render(first, options, hard).replaceAll(hard, '\n');
+      return render(first, options, hard, block).replaceAll(hard, '\n');
     }
 
     const raws = first.raw;
@@ -246,7 +263,7 @@ function create(options: ResolvedOptions): Spiel {
 
     // Folding never adds or drops a slot, so `parts` always has exactly one more entry than
     // `values` and the initial-value-free reduce is safe even with no substitutions at all.
-    const parts = render(source, options, hard).replaceAll(hard, '\n').split(slot);
+    const parts = render(source, options, hard, block).replaceAll(hard, '\n').split(slot);
     return parts.reduce(
       (acc, part, index) => acc + String(values[index - 1]) + part,
     );

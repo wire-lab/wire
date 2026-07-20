@@ -92,9 +92,14 @@ Input as it appears in the source, output as the returned string, with default o
 7. Hard breaks (a typed `\n`, or a line continuation) become real line breaks and are never folded.
 8. `${...}` values are inserted verbatim, last, and are invisible to every rule above.
 
-Recognized block markers: `-`, `*`, `+`, `1.` / `1)` (any number), `#` … `######`, `>` — each
-followed by a space — plus `|`, `` ``` `` and `~~~`, which need no space. Set `markdown: false` to
-treat all of them as ordinary text.
+Recognized block markers: `-`, `1.` / `1)` (any number), `#` … `######`, `>` — each followed by a
+space — plus `|`, `` ``` `` and `~~~`, which need no space. Set `markdown: false` to treat all of
+them as ordinary text.
+
+Of the three CommonMark bullets only `-` is recognized by default: a wrapped line starting with `+`
+or `*` is far more often prose (`2 + 2`, `a * b`) than a list. Pass `bullets` to change the set —
+`spiel.withOptions({ bullets: '-*+' })` restores the full CommonMark behavior, and `bullets: ''`
+disables bullet detection while keeping every other block marker.
 
 ## Enter versus `\n`
 
@@ -171,11 +176,12 @@ import type { Spiel, SpielOptions } from '@wire/spiel';
 | `spiel('...')`               | Function form, for an already built string. Every `\n` is a soft wrap. |
 | `spiel.withOptions({ ... })` | Returns a new `Spiel` with the options merged over the current ones.   |
 
-| Option      | Type      | Default  | Meaning                                                      |
-| ----------- | --------- | -------- | ------------------------------------------------------------ |
-| `join`      | `string`  | `' '`    | Replacement for a soft wrap. Use `''` for CJK or split URLs. |
-| `paragraph` | `string`  | `'\n\n'` | Paragraph separator. The default keeps the output markdown.  |
-| `markdown`  | `boolean` | `true`   | Recognize block markers and fences.                          |
+| Option      | Type      | Default  | Meaning                                                       |
+| ----------- | --------- | -------- | ------------------------------------------------------------- |
+| `join`      | `string`  | `' '`    | Replacement for a soft wrap. Use `''` for CJK or split URLs.  |
+| `paragraph` | `string`  | `'\n\n'` | Paragraph separator. The default keeps the output markdown.   |
+| `markdown`  | `boolean` | `true`   | Recognize block markers and fences.                           |
+| `bullets`   | `string`  | `'-'`    | Characters treated as bullets. `'-*+'` for all of CommonMark. |
 
 `withOptions` never mutates the tag it was called on, and its result can be configured further:
 
