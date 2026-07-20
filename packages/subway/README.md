@@ -11,7 +11,8 @@ services.
 - **Composable**: Use `group` routers and `bundles` to organize your application logic into modular
   components.
 - **Middleware Support**: detailed control over request processing with middleware at the global,
-  sub-router, and route levels.
+  sub-router, and route levels; nested sub-routers inherit the middleware of every scope enclosing
+  them.
 - **Route Injection**: Easily inject bundles of routes into different parts of your application.
 - **Flexible Handlers**: Define custom route types and handlers to fit your specific needs.
 - **Custom Separator**: Join prefixes and actions with `.` or any separator you choose.
@@ -101,6 +102,27 @@ Router.group('admin', (scope) => {
 });
 ```
 
+Scoped middleware is inherited by everything declared inside the scope, however deeply nested:
+
+```ts ignore
+Router.group('admin', (scope) => {
+  scope.use(require_admin); // applies to `admin.dashboard` and to `admin.users.list`
+
+  scope.add('dashboard', async (ctx) => {/* ... */});
+
+  scope.group('users', (scope) => {
+    scope.add('list', async (ctx) => {/* ... */});
+  });
+});
+```
+
+Middleware is applied to a route outermost-first: global middleware, then each enclosing group's in
+order, then the route's own. (How a route then orders its own pipeline is up to the route class.)
+
+> **Bundles are the exception.** A bundle builds its routes in its own router, and `inject` only
+> copies the finished routes into the destination. Middleware registered on the destination router
+> or group does **not** reach injected routes — apply guards inside the bundle factory itself.
+
 ### 4. Advanced Route Configuration (Casting)
 
 Use `cast` to configure routes with specific logic or validation before the handler.
@@ -173,3 +195,7 @@ The main router class.
 Interface for sub-routers, providing similar methods to `Subway` but scoped to a prefix.
 
 - `add`, `group`, `cast`, `use`, `inject` work relative to the current scope.
+- `cast_root`, `add_root`, `inject_root` register at the scope's own prefix, without a nested
+  action.
+- `wrap(callback)`: Create a nested scope with no prefix of its own — useful for applying middleware
+  to a subset of routes that share no parent name.

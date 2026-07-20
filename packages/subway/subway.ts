@@ -50,9 +50,12 @@ export type SubwayAnyRoute = SubwayRoute<any, any>;
 export type SubwayNode<R extends SubwayRoute<any, any>> = {
   cast(action: SubwayAction, factory: SubwayFactory<R>): R;
   add(action: SubwayAction, handler: SubwayHandler<R>): R;
+  cast_root(factory: SubwayFactory<R>): R;
+  add_root(handler: SubwayHandler<R>): R;
   group(prefix: SubwayAction, callback: (group: SubwayGroup<R>) => void): void;
   use(middleware: SubwayMiddleware<R>): void;
   inject(prefix: SubwayAction, bundle: Bundle<R>): void;
+  inject_root(bundle: Bundle<R>): void;
 };
 
 type RC<R extends SubwayRoute<any, any>> = {
@@ -99,9 +102,10 @@ export type SubwayOptions = {
  * };
  *
  * Router.group('user', (scope) => {
- *   scope.group('friends', (scope) => {
- *     sample_group_middleware(scope);
+ *   // Applies to every route in this group, including nested groups such as `user.friends.get`.
+ *   sample_group_middleware(scope);
  *
+ *   scope.group('friends', (scope) => {
  *     scope.add('get', async (ctx) => {});
  *   });
  *
@@ -190,6 +194,19 @@ export class Subway<R extends SubwayAnyRoute = SubwayAnyRoute> implements Subway
   }
 
   /**
+   * Adds a root route with the specified handler.
+   * @param handler The handler function for the route.
+   * @returns The created route.
+   * @example
+   * ```ts ignore
+   * Router.add_root((input: string) => `Root Handled: ${input}`);
+   * ```
+   */
+  add_root(handler: SubwayHandler<R>): R {
+    return this.add(undefined!, handler);
+  }
+
+  /**
    * Casts a new route with the specified action using the provided factory.
    * @param action The action associated with the route.
    * @param factory The factory function to create the route handler.
@@ -258,6 +275,10 @@ export class Subway<R extends SubwayAnyRoute = SubwayAnyRoute> implements Subway
 
   /**
    * Injects a bundle of routes with the specified prefix.
+   *
+   * A bundle is self-contained: its routes are already built by {@linkcode Subway.bundle}, and
+   * injecting only copies them under `prefix`. Middleware registered on the destination router or
+   * group is **not** applied to injected routes — guard a bundle inside its own factory.
    * @param prefix The prefix for the injected routes.
    * @param bundle The bundle of routes to inject.
    * @example
@@ -271,6 +292,23 @@ export class Subway<R extends SubwayAnyRoute = SubwayAnyRoute> implements Subway
         action === undefined ? prefix : `${prefix}${this.separator}${action}`,
         route,
       );
+    }
+  }
+
+  /**
+   * Injects a bundle of routes without a prefix; the bundle keeps its own action keys.
+   *
+   * Like {@linkcode Subway.inject}, this copies finished routes: router middleware is **not**
+   * applied to them.
+   * @param bundle The bundle of routes to inject.
+   * @example
+   * ```ts ignore
+   * Router.inject_root(bundle);
+   * ```
+   */
+  inject_root(bundle: Bundle<R>): void {
+    for (const [action, route] of bundle.routes.registry.entries()) {
+      this.registry.set(action, route);
     }
   }
 
@@ -360,6 +398,15 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
   ) {}
 
   /**
+   * Prepends this group's prefix to a nested action.
+   * A group without a prefix (see {@linkcode SubwayGroup.wrap}) passes the action through
+   * unchanged, so no leading separator is emitted.
+   */
+  private compose(action: SubwayAction): SubwayAction {
+    return this.prefix ? `${this.prefix}${this.separator}${action}` : action;
+  }
+
+  /**
    * Casts a new route with the specified action using the provided factory.
    * @param action The action associated with the route.
    * @param factory The factory function to create the route handler.
@@ -376,7 +423,7 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   cast(action: SubwayAction, factory: SubwayFactory<R>): R {
-    const route = this.parent.cast(`${this.prefix}${this.separator}${action}`, factory) as R;
+    const route = this.parent.cast(this.compose(action), factory) as R;
     for (const middleware of this.middlewares) middleware(route);
     return route;
   }
@@ -394,7 +441,7 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   add(action: SubwayAction, handler: SubwayHandler<R>): R {
-    const route = this.parent.add(`${this.prefix}${this.separator}${action}`, handler) as R;
+    const route = this.parent.add(this.compose(action), handler) as R;
     for (const middleware of this.middlewares) middleware(route);
     return route;
   }
@@ -412,7 +459,9 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   cast_root(factory: SubwayFactory<R>): R {
-    const route = this.parent.cast(this.prefix, factory) as R;
+    const route = (
+      this.prefix ? this.parent.cast(this.prefix, factory) : this.parent.cast_root(factory)
+    ) as R;
     for (const middleware of this.middlewares) middleware(route);
     return route;
   }
@@ -427,13 +476,19 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   add_root(handler: SubwayHandler<R>): R {
-    const route = this.parent.add(this.prefix, handler) as R;
+    const route = (
+      this.prefix ? this.parent.add(this.prefix, handler) : this.parent.add_root(handler)
+    ) as R;
     for (const middleware of this.middlewares) middleware(route);
     return route;
   }
 
   /**
    * Encapsulates child routes, useful for adding specific middlewares to a group of routes without a mutual parent name.
+   *
+   * The wrapped group adds no prefix segment of its own; actions keep the enclosing group's keys.
+   * Middleware registered on the enclosing group applies to routes declared inside `wrap`, and the
+   * wrapped group's own middleware applies only to them.
    * @param callback The callback function to define the sub-router.
    * @example
    * ```ts ignore
@@ -443,7 +498,7 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   wrap(callback: (group: SubwayGroup<R>) => void): void {
-    callback(new SubwayGroup<R>(this.parent, this.prefix, this.separator));
+    callback(new SubwayGroup<R>(this, '', this.separator));
   }
 
   /**
@@ -456,7 +511,7 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   inject(prefix: SubwayAction, bundle: Bundle<R>): void {
-    this.parent.inject(`${this.prefix}${this.separator}${prefix}`, bundle);
+    this.parent.inject(this.compose(prefix), bundle);
   }
 
   /**
@@ -468,12 +523,16 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   inject_root(bundle: Bundle<R>): void {
-    this.parent.inject(this.prefix, bundle);
+    if (this.prefix) this.parent.inject(this.prefix, bundle);
+    else this.parent.inject_root(bundle);
   }
 
   /**
    * Creates a sub-router (group) with the specified prefix and callback.
-   * @param prefix The prefix for the group.
+   *
+   * The nested group inherits this group's middleware: middleware accumulates outermost-first,
+   * with the nested group's own middleware applied last.
+   * @param prefix The prefix for the group, relative to this group.
    * @param callback The callback function to define the group.
    * @example
    * ```ts ignore
@@ -485,9 +544,7 @@ export class SubwayGroup<R extends SubwayRoute<any, any>> implements SubwayNode<
    * ```
    */
   group(prefix: SubwayAction, callback: (group: SubwayGroup<R>) => void): void {
-    callback(
-      new SubwayGroup<R>(this.parent, `${this.prefix}${this.separator}${prefix}`, this.separator),
-    );
+    callback(new SubwayGroup<R>(this, prefix, this.separator));
   }
 
   /**
