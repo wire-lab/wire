@@ -1,0 +1,9 @@
+{
+  "name": "@wire/spiel",
+  "version": "0.1.0",
+  "description": "Template tag that gives source line breaks markdown semantics: soft wraps collapse, blank lines keep paragraphs, indentation is stripped.",
+  "license": "MIT",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

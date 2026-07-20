@@ -2,6 +2,7 @@
   "workspace": [
     "./packages/byte-io",
     "./packages/logger",
+    "./packages/spiel",
     "./packages/subway",
     "./packages/uow"
   ],
