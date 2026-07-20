@@ -75,6 +75,27 @@ bar`,
   );
 });
 
+Deno.test('raw: the line after a continuation is dedented', () => {
+  assertEquals(
+    spiel`
+      a\
+      b
+    `,
+    'a\nb',
+  );
+  assertEquals(
+    spiel`
+      a\
+        deeper
+    `,
+    'a\ndeeper',
+  );
+});
+
+Deno.test('raw: spaces typed after a typed \\n stay literal', () => {
+  assertEquals(spiel`a\n  b`, 'a\n  b');
+});
+
 Deno.test('raw: unescapes the full template escape set', () => {
   assertEquals(spiel`tab\there`, 'tab\there');
   assertEquals(spiel`price \${x}`, 'price ${x}');

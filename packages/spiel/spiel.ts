@@ -83,7 +83,9 @@ function pickSentinels(text: string, count: number): string[] {
 
 /**
  * Converts the escape sequences of a raw template chunk into their values. Typed `\n` and line
- * continuations become `hard`, a marker that survives the folding pass as a real line break.
+ * continuations become `hard`, a marker that survives the folding pass as a real line break. A
+ * continuation keeps its `\n` so the following line still takes part in dedenting; a typed `\n`
+ * does not, so spaces typed after it stay literal.
  */
 function unescape(raw: string, hard: string): string {
   let out = '';
@@ -101,7 +103,9 @@ function unescape(raw: string, hard: string): string {
       break;
     }
     index += 2;
-    if (next === '\n' || next === 'n') {
+    if (next === '\n') {
+      out += hard + '\n';
+    } else if (next === 'n') {
       out += hard;
     } else if (next === 'x') {
       const digits = raw.slice(index, index + 2);
